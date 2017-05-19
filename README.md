@@ -3,7 +3,7 @@ This CloudFormation template is used in tandem with this series of DevCentral ar
 
 Deploy this template!
 
-<a href="https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=BIGIP-Across-Az-Cluster-2nic-Hourly&templateURL=https://s3-us-west-2.amazonaws.com/f5-cloud-month/week_one.cfn.json">
+<a href="https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?templateURL=https://s3-us-west-2.amazonaws.com/f5-cloud-month/week_one.cfn.json">
     <img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png"/>
 </a>
 
