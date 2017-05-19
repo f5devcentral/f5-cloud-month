@@ -439,6 +439,11 @@
                                             "    [System.IO.File]::WriteAllText($file, $content)\n",
                                             "}\n",
                                             "\n",
+                                            "function rename {\n",
+                                            "    param([string]$servername)\n",
+                                            "    Rename-Computer -NewName $servername -Restart\n",
+                                            "}\n",
+                                            "\n",
                                             "##  Check if we are the DB server or are a webserver ...\n",
                                             "$serverType = $(Test-Path \"C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\130\\Tools\\Binn\\SQLCMD.EXE\")\n",
                                             "\n",
@@ -455,6 +460,8 @@
                                             "    Unzip \"C:\\Users\\Administrator\\Downloads\\webpage.zip\" \"C:\\inetpub\\wwwroot\\\"\n",
                                             "    Write-Output \"Modifying Webpage with ServerName\"\n",
                                             "    fixContent \"C:\\inetpub\\wwwroot\\index.html\" $servername    \n",
+                                            "    Write-Output \"Modifying the computer name.\"\n",
+                                            "    rename $servername\n",
                                             "}\n"
                                         ]
                                     ]
@@ -587,6 +594,11 @@
                                             "    [System.IO.File]::WriteAllText($file, $content)\n",
                                             "}\n",
                                             "\n",
+                                            "function rename {\n",
+                                            "    param([string]$servername)\n",
+                                            "    Rename-Computer -NewName $servername -Restart\n",
+                                            "}\n",
+                                            "\n",
                                             "##  Check if we are the DB server or are a webserver ...\n",
                                             "$serverType = $(Test-Path \"C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\130\\Tools\\Binn\\SQLCMD.EXE\")\n",
                                             "\n",
@@ -603,6 +615,8 @@
                                             "    Unzip \"C:\\Users\\Administrator\\Downloads\\webpage.zip\" \"C:\\inetpub\\wwwroot\\\"\n",
                                             "    Write-Output \"Modifying Webpage with ServerName\"\n",
                                             "    fixContent \"C:\\inetpub\\wwwroot\\index.html\" $servername    \n",
+                                            "    Write-Output \"Modifying the computer name.\"\n",
+                                            "    rename $servername\n",
                                             "}\n"
                                         ]
                                     ]
@@ -735,6 +749,11 @@
                                             "    [System.IO.File]::WriteAllText($file, $content)\n",
                                             "}\n",
                                             "\n",
+                                            "function rename {\n",
+                                            "    param([string]$servername)\n",
+                                            "    Rename-Computer -NewName $servername -Restart\n",
+                                            "}\n",
+                                            "\n",
                                             "##  Check if we are the DB server or are a webserver ...\n",
                                             "$serverType = $(Test-Path \"C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\130\\Tools\\Binn\\SQLCMD.EXE\")\n",
                                             "\n",
@@ -751,6 +770,8 @@
                                             "    Unzip \"C:\\Users\\Administrator\\Downloads\\webpage.zip\" \"C:\\inetpub\\wwwroot\\\"\n",
                                             "    Write-Output \"Modifying Webpage with ServerName\"\n",
                                             "    fixContent \"C:\\inetpub\\wwwroot\\index.html\" $servername    \n",
+                                            "    Write-Output \"Modifying the computer name.\"\n",
+                                            "    rename $servername\n",
                                             "}\n"
                                         ]
                                     ]
@@ -878,6 +899,11 @@
                                             "    [System.IO.File]::WriteAllText($file, $content)\n",
                                             "}\n",
                                             "\n",
+                                            "function rename {\n",
+                                            "    param([string]$servername)\n",
+                                            "    Rename-Computer -NewName $servername -Restart\n",
+                                            "}\n",
+                                            "\n",
                                             "##  Check if we are the DB server or are a webserver ...\n",
                                             "$serverType = $(Test-Path \"C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\130\\Tools\\Binn\\SQLCMD.EXE\")\n",
                                             "\n",
@@ -894,6 +920,8 @@
                                             "    Unzip \"C:\\Users\\Administrator\\Downloads\\webpage.zip\" \"C:\\inetpub\\wwwroot\\\"\n",
                                             "    Write-Output \"Modifying Webpage with ServerName\"\n",
                                             "    fixContent \"C:\\inetpub\\wwwroot\\index.html\" $servername    \n",
+                                            "    Write-Output \"Modifying the computer name.\"\n",
+                                            "    rename $servername\n",
                                             "}\n"
                                         ]
                                     ]

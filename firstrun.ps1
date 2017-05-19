@@ -25,6 +25,11 @@ function fixContent {
     [System.IO.File]::WriteAllText($file, $content)
 }
 
+function rename {
+    param([string]$servername)
+    Rename-Computer -NewName $servername -Restart
+}
+
 ##  Check if we are the DB server or are a webserver ...
 $serverType = $(Test-Path "C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\110\Tools\Binn\SQLCMD.EXE")
 
@@ -41,4 +46,6 @@ else {
     Unzip "C:\Users\Administrator\Downloads\webpage.zip" "C:\inetpub\wwwroot\"
     Write-Output "Modifying Webpage with ServerName"
     fixContent "C:\inetpub\wwwroot\index.html" $servername    
+    Write-Output "Modifying the computer name."
+    rename $servername
 }
