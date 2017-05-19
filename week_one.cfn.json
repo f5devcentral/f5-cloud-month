@@ -1049,6 +1049,22 @@
                     ]
                 ]
             }
+        },
+        "WindowsInstace1PIP": {
+            "Description": "Use this Public IP Address to RDP to this server.",
+            "Value": { "Fn::GetAtt" : [ "WindowsInstance1", "PublicIp"] }
+        },
+        "WindowsInstace2PIP": {
+            "Description": "Use this Public IP Address to RDP to this server.",
+            "Value": { "Fn::GetAtt" : [ "WindowsInstance2", "PublicIp"] }
+        },
+        "WindowsInstace3PIP": {
+            "Description": "Use this Public IP Address to RDP to this server.",
+            "Value": { "Fn::GetAtt" : [ "WindowsInstance3", "PublicIp"] }
+        },
+        "DBInstancePIP": {
+            "Description": "Use this Public IP Address to RDP to this server.",
+            "Value": { "Fn::GetAtt" : [ "DBInstance", "PublicIp"] }
         }
     }
 }
