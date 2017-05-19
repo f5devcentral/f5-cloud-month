@@ -1,0 +1,1055 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "This template was designed for the DevCentral Cloud Month Articles.  It creates a full deployment of a VPC and all supporting infrastructure as well as a three servers of Microsoft Windows Server 2016 Base, and then finally configures IIS.",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Basics"
+                    },
+                    "Parameters": [
+                        "WindowsName1",
+                        "WindowsName2",
+                        "WindowsName3",
+                        "DBName",
+                        "KeyName",
+                        "adminUsername",
+                        "adminPassword"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Size"
+                    },
+                    "Parameters": [
+                        "WindowsInstanceType"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Settings"
+                    },
+                    "Parameters": [
+                        "WindowsAMI"
+                    ]
+                }
+            ],
+            "ParameterLabels": {}
+        }
+    },
+    "Parameters": {
+        "KeyName": {
+            "Description": "Name of an existing EC2 KeyPair",
+            "Type": "AWS::EC2::KeyPair::KeyName",
+            "ConstraintDescription": "Must be the name of an existing EC2 KeyPair."
+        },
+        "WindowsName1": {
+            "Description": "The name of the Windows Server.",
+            "Type": "String"
+        },
+        "WindowsName2": {
+            "Description": "The name of the Windows Server.",
+            "Type": "String"
+        },
+        "WindowsName3": {
+            "Description": "The name of the Windows Server.",
+            "Type": "String"
+        },
+        "DBName": {
+            "Description": "The name of the Database Windows Server.",
+            "Type": "String"
+        },
+        "adminUsername": {
+            "Type": "String",
+            "Description": "An admin username for loging into the Windows Server and BIG-IP.",
+            "MaxLength": "255",
+            "MinLength": "1"
+        },
+        "adminPassword": {
+            "Type": "String",
+            "NoEcho": "true",
+            "Description": "A password that will be used to login to the Windows Server and BIG-IP.",
+            "MaxLength": "255",
+            "MinLength": "1"
+        },
+        "WindowsInstanceType": {
+            "Description": "EC2 instance type",
+            "Type": "String",
+            "Default": "m4.xlarge",
+            "AllowedValues": [
+                "m4.xlarge",
+                "m4.2xlarge",
+                "c4.large",
+                "c4.xlarge",
+                "c4.2xlarge",
+                "c4.4xlarge",
+                "c4.8xlarge"
+            ],
+            "ConstraintDescription": "Choose one of the ."
+        },
+        "WindowsAMI": {
+            "Description": "Windows Version and Region AMI",
+            "Type": "String"
+        },
+        "DBAMI": {
+            "Description": "Windows Version and Region AMI",
+            "Type": "String"
+        }
+    },
+    "Resources": {
+        "StackVPC": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "EnableDnsSupport": "true",
+                "EnableDnsHostnames": "true",
+                "CidrBlock": "10.10.0.0/16",
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    "VPC-",
+                                    {
+                                        "Ref": "AWS::StackName"
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "StackSubnet1": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "StackVPC"
+                },
+                "AvailabilityZone": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            {
+                                "Ref": "AWS::Region"
+                            },
+                            "a"
+                        ]
+                    ]
+                },
+                "CidrBlock": "10.10.20.0/24",
+                "MapPublicIpOnLaunch": true,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "StackSubnet1"
+                    }
+                ]
+            }
+        },
+        "StackSubnet2": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "StackVPC"
+                },
+                "AvailabilityZone": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            {
+                                "Ref": "AWS::Region"
+                            },
+                            "b"
+                        ]
+                    ]
+                },
+                "CidrBlock": "10.10.21.0/24",
+                "MapPublicIpOnLaunch": true,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "StackSubnet2"
+                    }
+                ]
+            }
+        },
+        "StackSubnet3": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "StackVPC"
+                },
+                "AvailabilityZone": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            {
+                                "Ref": "AWS::Region"
+                            },
+                            "c"
+                        ]
+                    ]
+                },
+                "CidrBlock": "10.10.22.0/24",
+                "MapPublicIpOnLaunch": true,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "StackSubnet3"
+                    }
+                ]
+            }
+        },
+        "StackInternetGateway": {
+            "Type": "AWS::EC2::InternetGateway",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    "InternetGateway-",
+                                    {
+                                        "Ref": "AWS::StackName"
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "AttachGateway": {
+            "Type": "AWS::EC2::VPCGatewayAttachment",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "StackVPC"
+                },
+                "InternetGatewayId": {
+                    "Ref": "StackInternetGateway"
+                }
+            }
+        },
+        "ExternalRouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "StackVPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    "ExternalRouteTable-",
+                                    {
+                                        "Ref": "AWS::StackName"
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "ExternalRoute": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "ExternalRouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "StackInternetGateway"
+                }
+            }
+        },
+        "ExternalSubnetRouteTableAssociation1": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "StackSubnet1"
+                },
+                "RouteTableId": {
+                    "Ref": "ExternalRouteTable"
+                }
+            }
+        },
+        "ExternalSubnetRouteTableAssociation2": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "StackSubnet2"
+                },
+                "RouteTableId": {
+                    "Ref": "ExternalRouteTable"
+                }
+            }
+        },
+        "ExternalSubnetRouteTableAssociation3": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "StackSubnet3"
+                },
+                "RouteTableId": {
+                    "Ref": "ExternalRouteTable"
+                }
+            }
+        },
+        "ELBSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Allow HTTP",
+                "VpcId": {
+                    "Ref": "StackVPC"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "80",
+                        "ToPort": "80",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "StackELB01": {
+            "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+            "Properties": {
+                "Subnets": [
+                    {
+                        "Ref": "StackSubnet1"
+                    },
+                    {
+                        "Ref": "StackSubnet2"
+                    },
+                    {
+                        "Ref": "StackSubnet3"
+                    }
+                ],
+                "Instances": [
+                    {
+                        "Ref": "WindowsInstance1"
+                    },
+                    {
+                        "Ref": "WindowsInstance2"
+                    },
+                    {
+                        "Ref": "WindowsInstance3"
+                    }
+                ],
+                "Listeners": [
+                    {
+                        "LoadBalancerPort": "80",
+                        "InstancePort": "80",
+                        "Protocol": "HTTP"
+                    }
+                ],
+                "HealthCheck": {
+                    "Target": "HTTP:80/",
+                    "HealthyThreshold": "3",
+                    "UnhealthyThreshold": "5",
+                    "Interval": "30",
+                    "Timeout": "5"
+                },
+                "SecurityGroups": [
+                    {
+                        "Ref": "ELBSecurityGroup"
+                    }
+                ]
+            }
+        },
+        "WindowsSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Enable HTTP and RDP",
+                "VpcId": {
+                    "Ref": "StackVPC"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "80",
+                        "ToPort": "80",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "3389",
+                        "ToPort": "3389",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "1433",
+                        "ToPort": "1433",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "WindowsInstance1": {
+            "Type": "AWS::EC2::Instance",
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "configSets": {
+                        "IIS_Install": [
+                            "install_IIS"
+                        ]
+                    },
+                    "install_IIS": {
+                        "files": {
+                            "C:\\Users\\Administrator\\Downloads\\firstrun.ps1": {
+                                "content": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "param (    \n",
+                                            "    [string]$password,\n",
+                                            "    [string]$username,\n",
+                                            "    [string]$servername\n",
+                                            ")\n",
+                                            "\n",
+                                            "Add-Type -AssemblyName System.IO.Compression.FileSystem\n",
+                                            "\n",
+                                            "##  Create user and add to Administrators group\n",
+                                            "$pass = ConvertTo-SecureString $password -AsPlainText -Force\n",
+                                            "New-LocalUser -Name $username -Password $pass -PasswordNeverExpires\n",
+                                            "Add-LocalGroupMember -Group \"Administrators\" -Member $username\n",
+                                            "\n",
+                                            "## Functions\n",
+                                            "function Unzip\n",
+                                            "{\n",
+                                            "    param([string]$zipfile, [string]$outpath)\n",
+                                            "\n",
+                                            "    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)\n",
+                                            "}\n",
+                                            "\n",
+                                            "function fixContent {\n",
+                                            "    param([string]$file, [string]$value)\n",
+                                            "    $content = [System.IO.File]::ReadAllText($file).Replace('LOCATONS', $newvalue)\n",
+                                            "    [System.IO.File]::WriteAllText($file, $content)\n",
+                                            "}\n",
+                                            "\n",
+                                            "##  Check if we are the DB server or are a webserver ...\n",
+                                            "$serverType = $(Test-Path \"C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\130\\Tools\\Binn\\SQLCMD.EXE\")\n",
+                                            "\n",
+                                            "if ($serverType -eq $True) {\n",
+                                            "    ## Then we are the database server\n",
+                                            "}\n",
+                                            "else {\n",
+                                            "    ## Then we are a webserver\n",
+                                            "    Write-Output \"Installing the web-webserver\"\n",
+                                            "    add-windowsfeature web-webserver -includeallsubfeature -logpath $env:temp\\webserver_addrole.log\n",
+                                            "    Write-Output \"Installing web-mgmt-tools\"\n",
+                                            "    add-windowsfeature web-mgmt-tools -includeallsubfeature -logpath $env:temp\\mgmttools_addrole.log\n",
+                                            "    Write-Output \"Unzipping webcontent\"\n",
+                                            "    Unzip \"C:\\Users\\Administrator\\Downloads\\webpage.zip\" \"C:\\inetpub\\wwwroot\\\"\n",
+                                            "    Write-Output \"Modifying Webpage with ServerName\"\n",
+                                            "    fixContent \"C:\\inetpub\\wwwroot\\index.html\" $servername    \n",
+                                            "}\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "C:\\Users\\Administrator\\Downloads\\webpage.zip": {
+                                "source": "https://raw.githubusercontent.com/tstanley93/cloud-month/master/webpage.zip"
+                            }
+                        },
+                        "commands": {
+                            "b-configure": {
+                                "command": {
+                                    "Fn::Join": [
+                                        " ",
+                                        [
+                                            "powershell.exe -ExecutionPolicy unrestricted C:\\Users\\Administrator\\Downloads\\firstrun.ps1",
+                                            { "Ref": "adminPassword" },
+                                            { "Ref": "adminUsername"},
+                                            { "Ref": "WindowsName1"},
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties": {
+                "InstanceType": {
+                    "Ref": "WindowsInstanceType"
+                },
+                "ImageId": {
+                    "Ref": "WindowsAMI"
+                },
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "SubnetId": {
+                    "Ref": "StackSubnet1"
+                },
+                "SecurityGroupIds": [
+                    {
+                        "Fn::GetAtt": [
+                            "WindowsSecurityGroup",
+                            "GroupId"
+                        ]
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Ref": "WindowsName1"
+                        }
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "<script>\n",
+                                "cfn-init.exe -v ",
+                                " --stack ",
+                                {
+                                    "Ref": "AWS::StackId"
+                                },
+                                " --resource WindowsInstance1",
+                                " --configsets IIS_Install ",
+                                " --region ",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                "\n",
+                                "cfn-signal.exe -e %ERRORLEVEL% ",
+                                {
+                                    "Fn::Base64": {
+                                        "Ref": "WindowsInstance1WaitHandle"
+                                    }
+                                },
+                                "\n",
+                                "</script>"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "WindowsInstance2": {
+            "Type": "AWS::EC2::Instance",
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "configSets": {
+                        "IIS_Install": [
+                            "install_IIS"
+                        ]
+                    },
+                    "install_IIS": {
+                        "files": {
+                            "C:\\Users\\Administrator\\Downloads\\firstrun.ps1": {
+                                "content": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "param (    \n",
+                                            "    [string]$password,\n",
+                                            "    [string]$username,\n",
+                                            "    [string]$servername\n",
+                                            ")\n",
+                                            "\n",
+                                            "Add-Type -AssemblyName System.IO.Compression.FileSystem\n",
+                                            "\n",
+                                            "##  Create user and add to Administrators group\n",
+                                            "$pass = ConvertTo-SecureString $password -AsPlainText -Force\n",
+                                            "New-LocalUser -Name $username -Password $pass -PasswordNeverExpires\n",
+                                            "Add-LocalGroupMember -Group \"Administrators\" -Member $username\n",
+                                            "\n",
+                                            "## Functions\n",
+                                            "function Unzip\n",
+                                            "{\n",
+                                            "    param([string]$zipfile, [string]$outpath)\n",
+                                            "\n",
+                                            "    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)\n",
+                                            "}\n",
+                                            "\n",
+                                            "function fixContent {\n",
+                                            "    param([string]$file, [string]$value)\n",
+                                            "    $content = [System.IO.File]::ReadAllText($file).Replace('LOCATONS', $newvalue)\n",
+                                            "    [System.IO.File]::WriteAllText($file, $content)\n",
+                                            "}\n",
+                                            "\n",
+                                            "##  Check if we are the DB server or are a webserver ...\n",
+                                            "$serverType = $(Test-Path \"C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\130\\Tools\\Binn\\SQLCMD.EXE\")\n",
+                                            "\n",
+                                            "if ($serverType -eq $True) {\n",
+                                            "    ## Then we are the database server\n",
+                                            "}\n",
+                                            "else {\n",
+                                            "    ## Then we are a webserver\n",
+                                            "    Write-Output \"Installing the web-webserver\"\n",
+                                            "    add-windowsfeature web-webserver -includeallsubfeature -logpath $env:temp\\webserver_addrole.log\n",
+                                            "    Write-Output \"Installing web-mgmt-tools\"\n",
+                                            "    add-windowsfeature web-mgmt-tools -includeallsubfeature -logpath $env:temp\\mgmttools_addrole.log\n",
+                                            "    Write-Output \"Unzipping webcontent\"\n",
+                                            "    Unzip \"C:\\Users\\Administrator\\Downloads\\webpage.zip\" \"C:\\inetpub\\wwwroot\\\"\n",
+                                            "    Write-Output \"Modifying Webpage with ServerName\"\n",
+                                            "    fixContent \"C:\\inetpub\\wwwroot\\index.html\" $servername    \n",
+                                            "}\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "C:\\Users\\Administrator\\Downloads\\webpage.zip": {
+                                "source": "https://raw.githubusercontent.com/tstanley93/cloud-month/master/webpage.zip"
+                            }
+                        },
+                        "commands": {
+                            "b-configure": {
+                                "command": {
+                                    "Fn::Join": [
+                                        " ",
+                                        [
+                                            "powershell.exe -ExecutionPolicy unrestricted C:\\Users\\Administrator\\Downloads\\firstrun.ps1",
+                                            { "Ref": "adminPassword" },
+                                            { "Ref": "adminUsername"},
+                                            { "Ref": "WindowsName2"},
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties": {
+                "InstanceType": {
+                    "Ref": "WindowsInstanceType"
+                },
+                "ImageId": {
+                    "Ref": "WindowsAMI"
+                },
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "SubnetId": {
+                    "Ref": "StackSubnet2"
+                },
+                "SecurityGroupIds": [
+                    {
+                        "Fn::GetAtt": [
+                            "WindowsSecurityGroup",
+                            "GroupId"
+                        ]
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Ref": "WindowsName2"
+                        }
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "<script>\n",
+                                "cfn-init.exe -v ",
+                                " --stack ",
+                                {
+                                    "Ref": "AWS::StackId"
+                                },
+                                " --resource WindowsInstance2",
+                                " --configsets IIS_Install ",
+                                " --region ",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                "\n",
+                                "cfn-signal.exe -e %ERRORLEVEL% ",
+                                {
+                                    "Fn::Base64": {
+                                        "Ref": "WindowsInstance2WaitHandle"
+                                    }
+                                },
+                                "\n",
+                                "</script>"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "WindowsInstance3": {
+            "Type": "AWS::EC2::Instance",
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "configSets": {
+                        "IIS_Install": [
+                            "install_IIS"
+                        ]
+                    },
+                    "install_IIS": {
+                        "files": {
+                            "C:\\Users\\Administrator\\Downloads\\firstrun.ps1": {
+                                "content": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "param (    \n",
+                                            "    [string]$password,\n",
+                                            "    [string]$username,\n",
+                                            "    [string]$servername\n",
+                                            ")\n",
+                                            "\n",
+                                            "Add-Type -AssemblyName System.IO.Compression.FileSystem\n",
+                                            "\n",
+                                            "##  Create user and add to Administrators group\n",
+                                            "$pass = ConvertTo-SecureString $password -AsPlainText -Force\n",
+                                            "New-LocalUser -Name $username -Password $pass -PasswordNeverExpires\n",
+                                            "Add-LocalGroupMember -Group \"Administrators\" -Member $username\n",
+                                            "\n",
+                                            "## Functions\n",
+                                            "function Unzip\n",
+                                            "{\n",
+                                            "    param([string]$zipfile, [string]$outpath)\n",
+                                            "\n",
+                                            "    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)\n",
+                                            "}\n",
+                                            "\n",
+                                            "function fixContent {\n",
+                                            "    param([string]$file, [string]$value)\n",
+                                            "    $content = [System.IO.File]::ReadAllText($file).Replace('LOCATONS', $newvalue)\n",
+                                            "    [System.IO.File]::WriteAllText($file, $content)\n",
+                                            "}\n",
+                                            "\n",
+                                            "##  Check if we are the DB server or are a webserver ...\n",
+                                            "$serverType = $(Test-Path \"C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\130\\Tools\\Binn\\SQLCMD.EXE\")\n",
+                                            "\n",
+                                            "if ($serverType -eq $True) {\n",
+                                            "    ## Then we are the database server\n",
+                                            "}\n",
+                                            "else {\n",
+                                            "    ## Then we are a webserver\n",
+                                            "    Write-Output \"Installing the web-webserver\"\n",
+                                            "    add-windowsfeature web-webserver -includeallsubfeature -logpath $env:temp\\webserver_addrole.log\n",
+                                            "    Write-Output \"Installing web-mgmt-tools\"\n",
+                                            "    add-windowsfeature web-mgmt-tools -includeallsubfeature -logpath $env:temp\\mgmttools_addrole.log\n",
+                                            "    Write-Output \"Unzipping webcontent\"\n",
+                                            "    Unzip \"C:\\Users\\Administrator\\Downloads\\webpage.zip\" \"C:\\inetpub\\wwwroot\\\"\n",
+                                            "    Write-Output \"Modifying Webpage with ServerName\"\n",
+                                            "    fixContent \"C:\\inetpub\\wwwroot\\index.html\" $servername    \n",
+                                            "}\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "C:\\Users\\Administrator\\Downloads\\webpage.zip": {
+                                "source": "https://raw.githubusercontent.com/tstanley93/cloud-month/master/webpage.zip"
+                            }
+                        },
+                        "commands": {
+                            "b-configure": {
+                                "command": {
+                                    "Fn::Join": [
+                                        " ",
+                                        [
+                                            "powershell.exe -ExecutionPolicy unrestricted C:\\Users\\Administrator\\Downloads\\firstrun.ps1",
+                                            { "Ref": "adminPassword" },
+                                            { "Ref": "adminUsername"},
+                                            { "Ref": "WindowsName3"},
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties": {
+                "InstanceType": {
+                    "Ref": "WindowsInstanceType"
+                },
+                "ImageId": {
+                    "Ref": "WindowsAMI"
+                },
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "SubnetId": {
+                    "Ref": "StackSubnet3"
+                },
+                "SecurityGroupIds": [
+                    {
+                        "Fn::GetAtt": [
+                            "WindowsSecurityGroup",
+                            "GroupId"
+                        ]
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Ref": "WindowsName3"
+                        }
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "<script>\n",
+                                "cfn-init.exe -v ",
+                                " --stack ",
+                                {
+                                    "Ref": "AWS::StackId"
+                                },
+                                " --resource WindowsInstance3",
+                                " --configsets IIS_Install ",
+                                " --region ",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                "\n",
+                                "cfn-signal.exe -e %ERRORLEVEL% ",
+                                {
+                                    "Fn::Base64": {
+                                        "Ref": "WindowsInstance3WaitHandle"
+                                    }
+                                },
+                                "\n",
+                                "</script>"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "DBInstance": {
+            "Type": "AWS::EC2::Instance",
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "config": {
+                        "files": {
+                            "C:\\Users\\Administrator\\Downloads\\firstrun.ps1": {
+                                "content": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "param (    \n",
+                                            "    [string]$password,\n",
+                                            "    [string]$username,\n",
+                                            "    [string]$servername\n",
+                                            ")\n",
+                                            "\n",
+                                            "Add-Type -AssemblyName System.IO.Compression.FileSystem\n",
+                                            "\n",
+                                            "##  Create user and add to Administrators group\n",
+                                            "$pass = ConvertTo-SecureString $password -AsPlainText -Force\n",
+                                            "New-LocalUser -Name $username -Password $pass -PasswordNeverExpires\n",
+                                            "Add-LocalGroupMember -Group \"Administrators\" -Member $username\n",
+                                            "\n",
+                                            "## Functions\n",
+                                            "function Unzip\n",
+                                            "{\n",
+                                            "    param([string]$zipfile, [string]$outpath)\n",
+                                            "\n",
+                                            "    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)\n",
+                                            "}\n",
+                                            "\n",
+                                            "function fixContent {\n",
+                                            "    param([string]$file, [string]$value)\n",
+                                            "    $newvalue = '<li><a href=\"#map\">' + $value + '</a></li>'\n",
+                                            "    $content = [System.IO.File]::ReadAllText($file).Replace('[<li><a href=\"#map\">LOCATONS</a></li>]',$newvalue)\n",
+                                            "    [System.IO.File]::WriteAllText($file, $content)\n",
+                                            "}\n",
+                                            "\n",
+                                            "##  Check if we are the DB server or are a webserver ...\n",
+                                            "$serverType = $(Test-Path \"C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\130\\Tools\\Binn\\SQLCMD.EXE\")\n",
+                                            "\n",
+                                            "if ($serverType -eq $True) {\n",
+                                            "    ## Then we are the database server\n",
+                                            "}\n",
+                                            "else {\n",
+                                            "    ## Then we are a webserver\n",
+                                            "    Write-Output \"Installing the web-webserver\"\n",
+                                            "    add-windowsfeature web-webserver -includeallsubfeature -logpath $env:temp\\webserver_addrole.log\n",
+                                            "    Write-Output \"Installing web-mgmt-tools\"\n",
+                                            "    add-windowsfeature web-mgmt-tools -includeallsubfeature -logpath $env:temp\\mgmttools_addrole.log\n",
+                                            "    Write-Output \"Unzipping webcontent\"\n",
+                                            "    Unzip \"C:\\Users\\Administrator\\Downloads\\webpage.zip\" \"C:\\inetpub\\wwwroot\\\"\n",
+                                            "    Write-Output \"Modifying Webpage with ServerName\"\n",
+                                            "    fixContent \"C:\\inetpub\\wwwroot\\index.html\" $servername    \n",
+                                            "}\n"
+                                        ]
+                                    ]
+                                }
+                            }
+                        },
+                        "commands": {
+                            "b-configure": {
+                                "command": {
+                                    "Fn::Join": [
+                                        " ",
+                                        [
+                                            "powershell.exe -ExecutionPolicy unrestricted C:\\Users\\Administrator\\Downloads\\firstrun.ps1",
+                                            { "Ref": "adminPassword" },
+                                            { "Ref": "adminUsername"},
+                                            { "Ref": "DBName"},
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties": {
+                "InstanceType": {
+                    "Ref": "WindowsInstanceType"
+                },
+                "ImageId": {
+                    "Ref": "DBAMI"
+                },
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "SubnetId": {
+                    "Ref": "StackSubnet3"
+                },
+                "SecurityGroupIds": [
+                    {
+                        "Fn::GetAtt": [
+                            "WindowsSecurityGroup",
+                            "GroupId"
+                        ]
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Ref": "DBName"
+                        }
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "<script>\n",
+                                "cfn-init.exe -v ",
+                                " --stack ",
+                                {
+                                    "Ref": "AWS::StackId"
+                                },
+                                " --resource DBInstance",
+                                " --region ",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                "\n",
+                                "cfn-signal.exe -e %ERRORLEVEL% ",
+                                {
+                                    "Fn::Base64": {
+                                        "Ref": "DBInstanceWaitHandle"
+                                    }
+                                },
+                                "\n",
+                                "</script>"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "WindowsInstance1WaitHandle": {
+            "Type": "AWS::CloudFormation::WaitConditionHandle"
+        },
+        "WindowsInstance1WaitCondition": {
+            "Type": "AWS::CloudFormation::WaitCondition",
+            "DependsOn": "WindowsInstance1",
+            "Properties": {
+                "Handle": {
+                    "Ref": "WindowsInstance1WaitHandle"
+                },
+                "Timeout": "900"
+            }
+        },
+        "WindowsInstance2WaitHandle": {
+            "Type": "AWS::CloudFormation::WaitConditionHandle"
+        },
+        "WindowsInstance2WaitCondition": {
+            "Type": "AWS::CloudFormation::WaitCondition",
+            "DependsOn": "WindowsInstance2",
+            "Properties": {
+                "Handle": {
+                    "Ref": "WindowsInstance2WaitHandle"
+                },
+                "Timeout": "900"
+            }
+        },
+        "WindowsInstance3WaitHandle": {
+            "Type": "AWS::CloudFormation::WaitConditionHandle"
+        },
+        "WindowsInstance3WaitCondition": {
+            "Type": "AWS::CloudFormation::WaitCondition",
+            "DependsOn": "WindowsInstance3",
+            "Properties": {
+                "Handle": {
+                    "Ref": "WindowsInstance3WaitHandle"
+                },
+                "Timeout": "900"
+            }
+        },
+        "DBInstanceWaitHandle": {
+            "Type": "AWS::CloudFormation::WaitConditionHandle"
+        },
+        "DBInstanceWaitCondition": {
+            "Type": "AWS::CloudFormation::WaitCondition",
+            "DependsOn": "DBInstance",
+            "Properties": {
+                "Handle": {
+                    "Ref": "DBInstanceWaitHandle"
+                },
+                "Timeout": "900"
+            }
+        }
+    },
+    "Outputs": {
+        "ServerURL": {
+            "Description": "The AWS Generated URL.",
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "http://",
+                        {
+                            "Fn::GetAtt": [
+                                "StackELB01",
+                                "DNSName"
+                            ]
+                        }
+                    ]
+                ]
+            }
+        }
+    }
+}
