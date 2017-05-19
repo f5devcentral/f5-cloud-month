@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "This template was designed for the DevCentral Cloud Month Articles.  It creates a full deployment of a VPC and all supporting infrastructure as well as a three servers of Microsoft Windows Server 2016 Base, and then finally configures IIS.",
+    "Description": "This template was designed for the DevCentral Cloud Month Articles.  It creates a full deployment of a VPC and all supporting infrastructure as well as three servers of Microsoft Windows Server 2016 Base, and then finally configures IIS.",
     "Metadata": {
         "AWS::CloudFormation::Interface": {
             "ParameterGroups": [
@@ -42,34 +42,34 @@
         "KeyName": {
             "Description": "Name of an existing EC2 KeyPair",
             "Type": "AWS::EC2::KeyPair::KeyName",
-            "ConstraintDescription": "Must be the name of an existing EC2 KeyPair."
+            "ConstraintDescription": "Name of an existing EC2 key pair"
         },
         "WindowsName1": {
-            "Description": "The name of the Windows Server.",
+            "Description": "Name of the first Windows server",
             "Type": "String"
         },
         "WindowsName2": {
-            "Description": "The name of the Windows Server.",
+            "Description": "Name of the second Windows server",
             "Type": "String"
         },
         "WindowsName3": {
-            "Description": "The name of the Windows Server.",
+            "Description": "Name of the third Windows server",
             "Type": "String"
         },
         "DBName": {
-            "Description": "The name of the Database Windows Server.",
+            "Description": "Name of the Windows server that has database",
             "Type": "String"
         },
         "adminUsername": {
             "Type": "String",
-            "Description": "An admin username for loging into the Windows Server and BIG-IP.",
+            "Description": "Admin username for logging in to the Windows servers",
             "MaxLength": "255",
             "MinLength": "1"
         },
         "adminPassword": {
             "Type": "String",
             "NoEcho": "true",
-            "Description": "A password that will be used to login to the Windows Server and BIG-IP.",
+            "Description": "Password for logging in to to the Windows servers",
             "MaxLength": "255",
             "MinLength": "1"
         },
@@ -89,11 +89,11 @@
             "ConstraintDescription": "Choose one of the ."
         },
         "WindowsAMI": {
-            "Description": "Windows Version and Region AMI",
+            "Description": "AMI ID for Windows server in the region where you will deploy",
             "Type": "String"
         },
         "DBAMI": {
-            "Description": "Windows Version and Region AMI",
+            "Description": "AMI ID for Windows server with database in the region where you will deploy",
             "Type": "String"
         }
     },
