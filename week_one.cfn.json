@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "This template was designed for the DevCentral Cloud Month Articles.  It creates a full deployment of a VPC and all supporting infrastructure as well as three servers of Microsoft Windows Server 2016 Base, and then finally configures IIS.",
+    "Description": "This template was designed for the DevCentral Cloud Month Articles. It creates a full deployment of a VPC and supporting infrastructure, as well as three Microsoft Windows servers with IIS and one Windows Server to host a database.",
     "Metadata": {
         "AWS::CloudFormation::Interface": {
             "ParameterGroups": [
