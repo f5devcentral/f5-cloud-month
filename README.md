@@ -3,7 +3,7 @@ This CloudFormation template is used in tandem with <a href=https://devcentral.f
 
 You can deploy the template by clicking this button or copying the content of the week_one.cfn.json file.
 
-<a href="https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?templateURL=https://s3-us-west-2.amazonaws.com/f5-cloud-month/week_one.cfn.json">
+<a href="https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?templateURL=https://s3.us-east-2.amazonaws.com/f5-cloud-month/week_one.cfn.json">
     <img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png"/>
 </a>
 
